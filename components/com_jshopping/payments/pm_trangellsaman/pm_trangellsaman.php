@@ -14,7 +14,7 @@ if (!class_exists ('checkHack')) {
 }
 
 
-class pm_trangellzarinpal extends PaymentRoot{
+class pm_trangellsaman extends PaymentRoot{
     
     function showPaymentForm($params, $pmconfigs){	
         include(dirname(__FILE__)."/paymentform.php");
@@ -38,16 +38,14 @@ class pm_trangellzarinpal extends PaymentRoot{
         $return = $liveurlhost.SEFLink("index.php?option=com_jshopping&controller=checkout&task=step7&act=return&js_paymentclass=".$pm_method->payment_class).'&orderId='. $order->order_id;		
     	$notify_url2 = $liveurlhost.SEFLink("index.php?option=com_jshopping&controller=checkout&task=step2&act=notify&js_paymentclass=".$pm_method->payment_class."&no_lang=1");	
 		//======================================================
-	
-		if (!isset($MerchantId)) {	
+		$merchantId = $pmconfigs['samanmerchantId'];
+		
+		if (!isset($merchantId) || $merchantId == '') {	
 			$app->redirect($notify_url2, '<h2>لطفا تنظیمات درگاه سامان را بررسی کنید</h2>', $msgType='Error'); 
 		}
-		
-		$dateTime = JFactory::getDate();
-			
-		$merchantId = $pmconfigs['samanmerchantId'];
+
 		$reservationNumber = time();
-		$totalAmount =  $this->fixOrderTotal($order);
+		$totalAmount =  round($this->fixOrderTotal($order),0);
 		$callBackUrl  = $return;
 		$sendUrl = "https\://sep.shaparak.ir/Payment.aspx";
 		
@@ -124,8 +122,7 @@ class pm_trangellzarinpal extends PaymentRoot{
 						$out    = new SoapClient('https://sep.shaparak.ir/payments/referencepayment.asmx?WSDL');
 						$resultCode    = $out->VerifyTransaction($refNum, $merchantId);
 					
-						if ($resultCode == $price) {
-							$this->onPaymentSuccess($id, $trackingCode); 
+						if ($resultCode == round($price,0)) {
 							$message = "کد پیگیری".$trackingCode."<br>" ."شماره سفارش ".$order->order_id;
 							$app->enqueueMessage($message, 'message');
 						    saveToLog("payment.log", "Status Complete. Order ID ".$order->order_id.". message: ".$msg . " statud_code: " . $trackingCode);
@@ -165,7 +162,7 @@ class pm_trangellzarinpal extends PaymentRoot{
         $params['order_id'] = $oId;
         $params['hash'] = "";
         $params['checkHash'] = 0;
-        $params['checkReturnParams'] = 0;
+        $params['checkReturnParams'] = 1;
 		return $params;
     }
     
